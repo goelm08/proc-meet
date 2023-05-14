@@ -2,15 +2,42 @@ const path = require('path');
 const express = require('express')
 const http = require('http')
 const moment = require('moment');
+const bodyparser = require("body-parser");
 const socketio = require('socket.io');
 const PORT = process.env.PORT || 3000;
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(bodyparser.json({limit: "50000mb"}));
+app.use(bodyparser.urlencoded({limit: "50000mb", extended: true, parameterLimit:50000}));
+app.set("view engine", "ejs");
+
+
 const server = http.createServer(app);
-
 const io = socketio(server);
-
 app.use(express.static(path.join(__dirname, 'public')));
+
+var mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/gourav";
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+var db = mongoose.connection;
+const user = db.collection("user");
+
+db.on("error", console.error.bind(console, "connection error:"));
+db.once("open", function () {
+  console.log("Connection Successful!");
+});
+
+
+
 
 let rooms = {};
 let socketroom = {};
@@ -110,5 +137,19 @@ io.on('connect', socket => {
     });
 })
 //
+
+app.post('/register', (req , res)=>{
+
+  console.log(JSON.parse(req.body));
+//   return res.json({"succ":true});
+
+  // render index.html
+})
+
+app.get('/login' , (req , res)=>{
+  // render index.html
+})
+
+
 
 server.listen(PORT, () => console.log(`Server is up and running on port ${PORT}`));

@@ -20,16 +20,15 @@
     <div class="form-container">
       <h2>Register</h2>
       <form id="register-form">
-        <input type="email" id="register-email" placeholder="Email">
-        <input type="password" id="register-password" placeholder="Password">
-        <button type="button" id="capture-snapshot">Capture Snapshot</button>
-        <img id="snapshot-preview" alt="snapshot preview" style="display:none;">
-        <button type="submit">Register</button>
+        <input type="email" name="register-email" id="register-email" placeholder="Email">
+        <input type="password" name="register-password" id="register-password" placeholder="Password">
+        <video id="video" width="300" height="300" autoplay></video>
+        <button id="capture-btn">Capture Snapshot</button>
+        <button id="retake-btn" style="display:none">Retake</button>
+        <canvas id="canvas" name="canvas"  width="640" height="480"></canvas>
+        <img id="preview" style="display:none">
+        <button type="button" id="my-button">Register</button>
       </form>
-      <div id="camera-container">
-        <video id="camera-preview"></video>
-        <canvas id="snapshot-canvas"></canvas>
-      </div>
     </div>
   </div>
 </body>

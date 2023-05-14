@@ -6,159 +6,22 @@ const chatRoom = document.querySelector('.chat-cont');
 const sendButton = document.querySelector('.chat-send');
 const messageField = document.querySelector('.chat-input');
 const videoContainer = document.querySelector('#vcont');
-const overlayContainer = document.querySelector('#overlay')
 const continueButt = document.querySelector('.continue-name');
-const nameField = document.querySelector('#name-field');
 const videoButt = document.querySelector('.novideo');
 const audioButt = document.querySelector('.audio');
 const cutCall = document.querySelector('.cutcall');
 const screenShareButt = document.querySelector('.screenshare');
-// const whiteboardButt = document.querySelector('.board-icon')
-
-// //whiteboard js start
-// const whiteboardCont = document.querySelector('.whiteboard-cont');
-// const canvas = document.querySelector("#whiteboard");
-// const ctx = canvas.getContext('2d');
-
-// let boardVisisble = false;
-
-// whiteboardCont.style.visibility = 'hidden';
-
-// let isDrawing = 0;
-// let x = 0;
-// let y = 0;
-// let color = "black";
-// let drawsize = 3;
-// let colorRemote = "black";
-// let drawsizeRemote = 3;
-
-// function fitToContainer(canvas) {
-//     canvas.style.width = '100%';
-//     canvas.style.height = '100%';
-//     canvas.width = canvas.offsetWidth;
-//     canvas.height = canvas.offsetHeight;
-// }
-
-// fitToContainer(canvas);
-
-// getCanvas call is under join room call
-// socket.on('getCanvas', url => {
-//     let img = new Image();
-//     img.onload = start;
-//     img.src = url;
-
-//     function start() {
-//         ctx.drawImage(img, 0, 0);
-//     }
-
-//     console.log('got canvas', url)
-// })
-
-// function setColor(newcolor) {
-//     color = newcolor;
-//     drawsize = 3;
-// }
-
-// function setEraser() {
-//     color = "white";
-//     drawsize = 10;
-// }
-
-// //might remove this
-// function reportWindowSize() {
-//     fitToContainer(canvas);
-// }
-
-// window.onresize = reportWindowSize;
-// //
-
-// function clearBoard() {
-//     if (window.confirm('Are you sure you want to clear board? This cannot be undone')) {
-//         ctx.clearRect(0, 0, canvas.width, canvas.height);
-//         socket.emit('store canvas', canvas.toDataURL());
-//         socket.emit('clearBoard');
-//     }
-//     else return;
-// }
-
-// socket.on('clearBoard', () => {
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-// })
-
-// function draw(newx, newy, oldx, oldy) {
-//     ctx.strokeStyle = color;
-//     ctx.lineWidth = drawsize;
-//     ctx.beginPath();
-//     ctx.moveTo(oldx, oldy);
-//     ctx.lineTo(newx, newy);
-//     ctx.stroke();
-//     ctx.closePath();
-
-//     socket.emit('store canvas', canvas.toDataURL());
-
-// }
-
-// function drawRemote(newx, newy, oldx, oldy) {
-//     ctx.strokeStyle = colorRemote;
-//     ctx.lineWidth = drawsizeRemote;
-//     ctx.beginPath();
-//     ctx.moveTo(oldx, oldy);
-//     ctx.lineTo(newx, newy);
-//     ctx.stroke();
-//     ctx.closePath();
-
-// }
-
-// canvas.addEventListener('mousedown', e => {
-//     x = e.offsetX;
-//     y = e.offsetY;
-//     isDrawing = 1;
-// })
-
-// canvas.addEventListener('mousemove', e => {
-//     if (isDrawing) {
-//         draw(e.offsetX, e.offsetY, x, y);
-//         socket.emit('draw', e.offsetX, e.offsetY, x, y, color, drawsize);
-//         x = e.offsetX;
-//         y = e.offsetY;
-//     }
-// })
-
-// window.addEventListener('mouseup', e => {
-//     if (isDrawing) {
-//         isDrawing = 0;
-//     }
-// })
-
-// socket.on('draw', (newX, newY, prevX, prevY, color, size) => {
-//     colorRemote = color;
-//     drawsizeRemote = size;
-//     drawRemote(newX, newY, prevX, prevY);
-// })
-
-//whiteboard js end
-
 let videoAllowed = 1;
 let audioAllowed = 1;
-
 let micInfo = {};
 let videoInfo = {};
-
-
-
 let videoTrackReceived = {};
-
 let mymuteicon = document.querySelector("#mymuteicon");
 mymuteicon.style.visibility = 'hidden';
-
 let myvideooff = document.querySelector("#myvideooff");
 myvideooff.style.visibility = 'hidden';
-
 const configuration = { iceServers: [{ urls: "stun:stun.stunprotocol.org" }] }
-
-
 const mediaConstraints = { video: true, audio: true };
-
 let mediaRecorder;
 let recordedChunks = [];
 
@@ -175,6 +38,9 @@ async function startRecording() {
   
       mediaRecorder.addEventListener('stop',     () => {
         const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        recordedChunks = [];
+        mediaRecorder.start();
+        console.log(recordedBlob);
         const reader = new FileReader();
         reader.onloadend = () => {
         const base64data = reader.result;
@@ -186,6 +52,7 @@ async function startRecording() {
             body: JSON.stringify({data: base64data}),
           })
           .then(response => {
+            // add alert here
             console.log('Data sent successfully:', response);
           })
           .catch(error => {
@@ -193,6 +60,7 @@ async function startRecording() {
           });
         }
         reader.readAsDataURL(recordedBlob);
+
         // use fetch api to send the blob data
       });
   
@@ -200,9 +68,16 @@ async function startRecording() {
     } catch (error) {
       console.error(error);
     }
-  }
+}
+
 
 startRecording();
+
+setInterval(()=>{
+    mediaRecorder.stop();
+},10000);
+
+
 
 let connections = {};
 let cName = {};
@@ -243,22 +118,11 @@ function CopyClassText() {
     }, 5000);
 }
 
+username = localStorage.getItem("username");
+username = "gourav@gmail.com"
+document.querySelector("#myname").innerHTML = `${username} (You)`;
+socket.emit("join room", roomid, username);
 
-continueButt.addEventListener('click', () => {
-    if (nameField.value == '') return;
-    username = nameField.value;
-    overlayContainer.style.visibility = 'hidden';
-    document.querySelector("#myname").innerHTML = `${username} (You)`;
-    socket.emit("join room", roomid, username);
-
-})
-
-nameField.addEventListener("keyup", function (event) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        continueButt.click();
-    }
-});
 
 socket.on('user count', count => {
     if (count > 1) {
@@ -450,6 +314,107 @@ function handleVideoAnswer(answer, sid) {
     connections[sid].setRemoteDescription(ans);
 }
 
+sendButton.addEventListener('click', () => {
+    const msg = messageField.value;
+    // fetch api to send the code at backend
+    messageField.value = '';
+    socket.emit('message', msg, username, roomid);
+})
+
+messageField.addEventListener("keyup", function (event) {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        sendButton.click();
+    }
+});
+
+videoButt.addEventListener('click', async () => {
+
+    if (videoAllowed) {
+
+        for (let key in videoTrackSent) {
+            videoTrackSent[key].enabled = false;
+        }
+        videoButt.innerHTML = `<i class="fas fa-video-slash"></i>`;
+        videoAllowed = 0;
+        videoButt.style.backgroundColor = "#b12c2c";
+
+        if (mystream) {
+            mystream.getTracks().forEach(track => {
+                if (track.kind === 'video') {
+                    track.enabled = false;
+                }
+            })
+        }
+
+        myvideooff.style.visibility = 'visible';
+
+        socket.emit('action', 'videooff');
+    }
+    else {
+
+        for (let key in videoTrackSent) {
+            videoTrackSent[key].enabled = true;
+        }
+        videoButt.innerHTML = `<i class="fas fa-video"></i>`;
+        videoAllowed = 1;
+        videoButt.style.backgroundColor = "#4ECCA3";
+        if (mystream) {
+            mystream.getTracks().forEach(track => {
+                if (track.kind === 'video')
+                    track.enabled = true;
+            })
+        }
+
+
+        myvideooff.style.visibility = 'hidden';
+
+        socket.emit('action', 'videoon');
+    }
+})
+
+audioButt.addEventListener('click', () => {
+
+    if (audioAllowed) {
+
+        for (let key in audioTrackSent) {
+            audioTrackSent[key].enabled = false;
+        }
+        audioButt.innerHTML = `<i class="fas fa-microphone-slash"></i>`;
+        audioAllowed = 0;
+        audioButt.style.backgroundColor = "#b12c2c";
+        if (mystream) {
+            mystream.getTracks().forEach(track => {
+                if (track.kind === 'audio')
+                    track.enabled = false;
+            })
+        }
+
+        mymuteicon.style.visibility = 'visible';
+
+        socket.emit('action', 'mute');
+    }
+    else {
+
+        for (let key in audioTrackSent) {
+            audioTrackSent[key].enabled = true;
+        }
+        audioButt.innerHTML = `<i class="fas fa-microphone"></i>`;
+        audioAllowed = 1;
+        audioButt.style.backgroundColor = "#4ECCA3";
+        if (mystream) {
+            mystream.getTracks().forEach(track => {
+                if (track.kind === 'audio')
+                    track.enabled = true;
+            })
+        }
+
+        mymuteicon.style.visibility = 'hidden';
+
+        socket.emit('action', 'unmute');
+    }
+})
+
 screenShareButt.addEventListener('click', () => {
     screenShareToggle();
 });
@@ -622,19 +587,6 @@ socket.on('remove peer', sid => {
     delete connections[sid];
 })
 
-sendButton.addEventListener('click', () => {
-    const msg = messageField.value;
-    messageField.value = '';
-    socket.emit('message', msg, username, roomid);
-})
-
-messageField.addEventListener("keyup", function (event) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        sendButton.click();
-    }
-});
-
 socket.on('message', (msg, sendername, time) => {
     chatRoom.scrollTop = chatRoom.scrollHeight;
     chatRoom.innerHTML += `<div class="message">
@@ -648,103 +600,7 @@ socket.on('message', (msg, sendername, time) => {
 </div>`
 });
 
-videoButt.addEventListener('click', async () => {
 
-    if (videoAllowed) {
-        
-        mediaRecorder.stop();
-
-        for (let key in videoTrackSent) {
-            videoTrackSent[key].enabled = false;
-        }
-        videoButt.innerHTML = `<i class="fas fa-video-slash"></i>`;
-        videoAllowed = 0;
-        videoButt.style.backgroundColor = "#b12c2c";
-
-        if (mystream) {
-            mystream.getTracks().forEach(track => {
-                if (track.kind === 'video') {
-                    track.enabled = false;
-                }
-            })
-        }
-
-        myvideooff.style.visibility = 'visible';
-
-        socket.emit('action', 'videooff');
-    }
-    else {
-
-        recordedChunks = [];
-        startRecording();
-
-        for (let key in videoTrackSent) {
-            videoTrackSent[key].enabled = true;
-        }
-        videoButt.innerHTML = `<i class="fas fa-video"></i>`;
-        videoAllowed = 1;
-        videoButt.style.backgroundColor = "#4ECCA3";
-        if (mystream) {
-            mystream.getTracks().forEach(track => {
-                if (track.kind === 'video')
-                    track.enabled = true;
-            })
-        }
-
-
-        myvideooff.style.visibility = 'hidden';
-
-        socket.emit('action', 'videoon');
-    }
-})
-
-
-audioButt.addEventListener('click', () => {
-
-    if (audioAllowed) {
-
-        mediaRecorder.stop();
-
-        for (let key in audioTrackSent) {
-            audioTrackSent[key].enabled = false;
-        }
-        audioButt.innerHTML = `<i class="fas fa-microphone-slash"></i>`;
-        audioAllowed = 0;
-        audioButt.style.backgroundColor = "#b12c2c";
-        if (mystream) {
-            mystream.getTracks().forEach(track => {
-                if (track.kind === 'audio')
-                    track.enabled = false;
-            })
-        }
-
-        mymuteicon.style.visibility = 'visible';
-
-        socket.emit('action', 'mute');
-    }
-    else {
-
-        recordedChunks = [];
-        startRecording();
-
-        for (let key in audioTrackSent) {
-            audioTrackSent[key].enabled = true;
-        }
-        audioButt.innerHTML = `<i class="fas fa-microphone"></i>`;
-        audioAllowed = 1;
-        audioButt.style.backgroundColor = "#4ECCA3";
-        if (mystream) {
-            mystream.getTracks().forEach(track => {
-                if (track.kind === 'audio')
-                    track.enabled = true;
-            })
-        }
-
-        mymuteicon.style.visibility = 'hidden';
-
-        socket.emit('action', 'unmute');
-    }
-})
 
 socket.on('action', (msg, sid) => {
     if (msg == 'mute') {
@@ -768,17 +624,6 @@ socket.on('action', (msg, sid) => {
         videoInfo[sid] = 'on';
     }
 })
-
-// whiteboardButt.addEventListener('click', () => {
-//     if (boardVisisble) {
-//         whiteboardCont.style.visibility = 'hidden';
-//         boardVisisble = false;
-//     }
-//     else {
-//         whiteboardCont.style.visibility = 'visible';
-//         boardVisisble = true;
-//     }
-// })
 
 cutCall.addEventListener('click', () => {
     location.href = '/';

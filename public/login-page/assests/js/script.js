@@ -1,94 +1,100 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = document.getElementById("login-form");
-    const registerForm = document.getElementById("register-form");
-    const cameraPreview = document.getElementById("camera-preview");
-    const snapshotCanvas = document.getElementById("snapshot-canvas");
-    const captureSnapshotButton = document.getElementById("capture-snapshot");
-    const snapshotPreview = document.getElementById("snapshot-preview");
-    
-    // Initialize the camera and take a snapshot.
-  async function initCameraAndTakeSnapshot() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      cameraPreview.srcObject = stream;
-      cameraPreview.play();
-    } catch (err) {
-      console.error("Error accessing the camera:", err);
-    }
-  }
-  
-  // Capture the snapshot and display it.
-  function captureSnapshot() {
-    snapshotCanvas.width = cameraPreview.videoWidth;
-    snapshotCanvas.height = cameraPreview.videoHeight;
-    snapshotCanvas.getContext("2d").drawImage(cameraPreview, 0, 0);
-    snapshotPreview.src = snapshotCanvas.toDataURL("image/jpeg");
-    snapshotPreview.style.display = "block";
-  }
-  
-  captureSnapshotButton.addEventListener("click", captureSnapshot);
-  
-    async function sendUserData(url, email, password) {
-      try {
-        const snapshot = snapshotCanvas.toDataURL("image/jpeg");
-        // const response = await fetch(url, {
-        //   method: "POST",
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        //   body: JSON.stringify({ email, password, snapshot }),
-        // });
-  
-        // if (!response.ok) {
-        //   throw new Error(`Error: ${response.statusText}`);
-        // }
-  
-        return true;
-      } catch (err) {
-        console.error("Error sending user data:", err);
-        return null;
-      }
-    }
-  
-    loginForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-  
-      await initCameraAndTakeSnapshot();
-  
-      // Replace with your backend authentication endpoint.
-      const url = "https://your-backend-authentication-endpoint.example.com/login";
-      const result = await sendUserData(url, email, password);
-  
-      if (result) {
-        // Process successful login, e.g., redirect to the user dashboard.
-        console.log("YOooo");
-      } else {
-        // Handle unsuccessful login.
-        console.log("waon waon");
-      }
-    });
-  
-    registerForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const email = document.getElementById("register-email").value;
-      const password = document.getElementById("register-password").value;
-  
-      await initCameraAndTakeSnapshot();
-  
-      // Replace with your backend registration endpoint.
-      const url = "https://your-backend-registration-endpoint.example.com/register";
-      const result = await sendUserData(url, email, password);
-  
-      if (result) {
-        // Process successful registration, e.g., show a success message.
-        console.log("YOooo");
-      } else {
-        // Handle unsuccessful registration, e.g., show an error message and retake the snapshot.
-        console.log("waon waon");
-        // await initCameraAndTakeSnapshot();
-      }
-    });
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const captureBtn = document.getElementById("capture-btn");
+const retakeBtn = document.getElementById("retake-btn");
+const preview = document.getElementById("preview");
+const emailInput = document.getElementById("register-email");
+const passwordInput = document.getElementById("register-password");
+
+const constraints = {
+  audio: false,
+  video: true,
+};
+let stream = null;
+
+// Get access to the camera
+navigator.mediaDevices
+  .getUserMedia(constraints)
+  .then((mediaStream) => {
+    stream = mediaStream;
+    video.srcObject = stream;
+  })
+  .catch((err) => {
+    console.error(err);
   });
-  
+
+// Take snapshot on button click
+captureBtn.addEventListener("click", (event) => {
+  event.preventDefault();
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataURL = canvas.toDataURL("image/png");
+  preview.src = dataURL;
+  preview.style.display = "block";
+  video.style.display = "none";
+  captureBtn.style.display = "none";
+  retakeBtn.style.display = "block";
+});
+
+// Retake snapshot on button click
+retakeBtn.addEventListener("click", (event) => {
+  event.preventDefault();
+  preview.style.display = "none";
+  video.style.display = "block";
+  captureBtn.style.display = "block";
+  retakeBtn.style.display = "none";
+  stream.getTracks().forEach((track) => {
+    if (track.readyState === "ended" && typeof track.start === "function") {
+      track.start();
+    }
+  });
+});
+
+function dataURLtoBlob(dataUrl) {
+  const binary = atob(dataUrl.split(",")[1]);
+  const array = [];
+  for (let i = 0; i < binary.length; i++) {
+    array.push(binary.charCodeAt(i));
+  }
+  return new Blob([new Uint8Array(array)], { type: "image/jpeg" });
+}
+
+const myButton = document.querySelector('#my-button');
+
+myButton.addEventListener('click', (event) => {
+  event.preventDefault();
+  const blob = dataURLtoBlob(preview.src);
+  const formData = new FormData();
+  formData.append('image', blob.stream());
+  formData.append('email', emailInput.value);
+  formData.append('password', passwordInput.value);
+  console.log(formData.get("image"))
+  // Set the request URL and options
+  const url = "/register";
+  const options = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  };
+
+  // Send the request
+  fetch(url, options)
+    .then((response) => {
+      if (response.ok) {
+        // The request was successful
+        return response.json();
+      } else {
+        // There was an error with the request
+        throw new Error("Error:", response.statusText);
+      }
+    })
+    .then((data) => {
+      // Do something with the response data
+      console.log(data);
+    })
+    .catch((error) => {
+      // Handle any errors that occurred during the request
+      console.error(error);
+    });
+})
