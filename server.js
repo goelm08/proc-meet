@@ -12,13 +12,15 @@ require("dotenv").config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(bodyparser.json({limit: "50000mb"}));
-app.use(bodyparser.urlencoded({limit: "50000mb", extended: true, parameterLimit:50000}));
+app.use(bodyparser.json({limit: "10mb"}));
+app.use(bodyparser.urlencoded({limit: "10mb", extended: true, parameterLimit:50000}));
 app.set("view engine", "ejs");
+const jsonParser = bodyParser.json({ limit: '10mb' });
 
 
 const server = http.createServer(app);
 const io = socketio(server);
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 var mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/gourav";
@@ -138,8 +140,7 @@ io.on('connect', socket => {
 })
 //
 
-app.post('/register', (req , res)=>{
-
+app.post('/register', jsonParser,(req , res)=>{
   console.log(JSON.parse(req.body));
 //   return res.json({"succ":true});
 
@@ -147,9 +148,9 @@ app.post('/register', (req , res)=>{
 })
 
 app.get('/login' , (req , res)=>{
-  // render index.html
+    return res.sendFile('login-page/login.html', { root: path.join(__dirname, 'public') });
 })
 
 
 
-server.listen(PORT, () => console.log(`Server is up and running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server is up and running on port ${PORT}`)); 

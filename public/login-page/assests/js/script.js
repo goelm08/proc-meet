@@ -64,20 +64,15 @@ myButton.addEventListener('click', (event) => {
   event.preventDefault();
   const blob = dataURLtoBlob(preview.src);
   const formData = new FormData();
-  formData.append('image', blob.stream());
+  formData.append('image', blob);
   formData.append('email', emailInput.value);
   formData.append('password', passwordInput.value);
-  console.log(formData.get("image"))
   // Set the request URL and options
-  const url = "/register";
+  const url = "http://localhost:5000/login";
   const options = {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(formData),
+    body: formData,
   };
-
   // Send the request
   fetch(url, options)
     .then((response) => {

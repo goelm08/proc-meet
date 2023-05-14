@@ -40,7 +40,6 @@ async function startRecording() {
         const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
         recordedChunks = [];
         mediaRecorder.start();
-        console.log(recordedBlob);
         const reader = new FileReader();
         reader.onloadend = () => {
         const base64data = reader.result;
@@ -51,8 +50,15 @@ async function startRecording() {
             },
             body: JSON.stringify({data: base64data}),
           })
+          .then(response => response.json())
           .then(response => {
+            profanity = response['profanity']
+            console.log(profanity)
+            if(profanity){
+                alert("Profanity detected in your video! Please record again.")
+            }
             // add alert here
+            // check content of response from flask
             console.log('Data sent successfully:', response);
           })
           .catch(error => {
@@ -316,9 +322,34 @@ function handleVideoAnswer(answer, sid) {
 
 sendButton.addEventListener('click', () => {
     const msg = messageField.value;
+    fetch('http://localhost:5000/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({data: msg}),
+          })
+          .then(response => response.json())
+          .then(response => {
+            profanity = response['profanity']
+            console.log(profanity)
+            if(profanity){
+                alert("Profanity detected in your video! Please record again.")
+                return;
+            }
+            else{
+                messageField.value = '';
+                socket.emit('message', msg, username, roomid);
+            }
+            // add alert here
+            // check content of response from flask
+            console.log('Data sent successfully:', response);
+          })
+          .catch(error => {
+            console.error('Error sending data:', error);
+          });
     // fetch api to send the code at backend
-    messageField.value = '';
-    socket.emit('message', msg, username, roomid);
+   
 })
 
 messageField.addEventListener("keyup", function (event) {
