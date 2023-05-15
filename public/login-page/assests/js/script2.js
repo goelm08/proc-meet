@@ -58,17 +58,17 @@ function dataURLtoBlob(dataUrl) {
   return new Blob([new Uint8Array(array)], { type: "image/jpeg" });
 }
 
-const myButton = document.querySelector('#my-button');
+const myButton = document.querySelector("#my-button");
 
-myButton.addEventListener('click', (event) => {
+myButton.addEventListener("click", (event) => {
   event.preventDefault();
   const blob = dataURLtoBlob(preview.src);
   const formData = new FormData();
-  formData.append('image', blob);
-  formData.append('email', emailInput.value);
-  formData.append('password', passwordInput.value);
+  formData.append("image", blob);
+  formData.append("email", emailInput.value);
+  formData.append("password", passwordInput.value);
   // Set the request URL and options
-  const url = "http://localhost:5000/login";
+  const url = "http://localhost:5000/register";
   const options = {
     method: "POST",
     body: formData,
@@ -77,6 +77,7 @@ myButton.addEventListener('click', (event) => {
   fetch(url, options)
     .then((response) => {
       if (response.ok) {
+        console.log("a");
         // The request was successful
         return response.json();
       } else {
@@ -86,10 +87,11 @@ myButton.addEventListener('click', (event) => {
     })
     .then((data) => {
       // Do something with the response data
+      location.href = "/login";
       console.log(data);
     })
     .catch((error) => {
       // Handle any errors that occurred during the request
       console.error(error);
     });
-})
+});
